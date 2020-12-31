@@ -14,6 +14,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
         storage.removeItem(x);
         return true;
       } catch (e) {
+        alert(
+          "You are browsing in a manner that has local storage disabled, e.g. in private mode or with Javascript features turned off. This page will not save your invitees across page loads."
+        );
         return (
           e instanceof DOMException &&
           // everything except Firefox
@@ -40,10 +43,6 @@ window.addEventListener("DOMContentLoaded", (event) => {
             ul.appendChild(invitee);
           }
         }
-      } else {
-        alert(
-          "You are browsing in a manner that has local storage disabled, e.g. in private mode or with Javascript features turned off. This page will not save your invitees across page loads."
-        );
       }
     },
     setLocalStorage: (storageType) => {
@@ -112,17 +111,20 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (input.value != "") {
-      const text = input.value;
-      input.value = "";
+    const names = document.querySelectorAll("ul li span");
+    if (names)
+      if (input.value)
+        if (input.value != "") {
+          const text = input.value;
+          input.value = "";
 
-      const submitBtn = input.nextElementSibling;
-      submitBtn.className = "disabled";
+          const submitBtn = input.nextElementSibling;
+          submitBtn.className = "disabled";
 
-      const li = createCard(text);
-      ul.appendChild(li);
-      data.setLocalStorage();
-    }
+          const li = createCard(text);
+          ul.appendChild(li);
+          return data.setLocalStorage();
+        }
   });
 
   /**
