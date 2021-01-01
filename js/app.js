@@ -2,6 +2,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   const form = document.getElementById("registrar");
   const input = document.querySelector("#registrar input");
   const ul = document.getElementById("invitedList");
+  const tooltip = document.getElementById("errorTooltip").firstElementChild;
   const filterContainer = ul.previousElementSibling;
 
   const data = {
@@ -111,20 +112,24 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const names = document.querySelectorAll("ul li span");
-    if (names)
-      if (input.value)
-        if (input.value != "") {
-          const text = input.value;
-          input.value = "";
+    const spans = document.querySelectorAll("ul li span");
+    const names = [...spans].map((span) => span.innerHTML);
+    if (!names.includes(input.value)) {
+      if (form.classList.contains("error")) form.classList.remove("error");
+      if (tooltip.classList.contains("showTooltip"))
+        tooltip.classList.remove("showTooltip");
+      const text = input.value;
+      input.value = "";
 
-          const submitBtn = input.nextElementSibling;
-          submitBtn.className = "disabled";
+      const submitBtn = input.nextElementSibling;
+      submitBtn.className = "disabled";
 
-          const li = createCard(text);
-          ul.appendChild(li);
-          return data.setLocalStorage();
-        }
+      const li = createCard(text);
+      ul.appendChild(li);
+      return data.setLocalStorage();
+    }
+    form.classList.add("error");
+    tooltip.classList.add("showTooltip");
   });
 
   /**

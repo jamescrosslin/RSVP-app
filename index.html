@@ -20,10 +20,16 @@
         <h1>RSVP</h1>
         <p>A Treehouse App</p>
         <form id="registrar">
-          <input type="text" name="name" placeholder="Invite Someone" />
-          <button type="submit" name="submit" value="submit" class="disabled">
-            Submit
-          </button>
+          <div id="errorTooltip">
+            <span class="tooltipText"
+              >That name is already on the list! Please enter a different
+              name.</span
+            >
+            <input type="text" name="name" placeholder="Invite Someone" />
+            <button type="submit" name="submit" value="submit" class="disabled">
+              Submit
+            </button>
+          </div>
         </form>
       </header>
 

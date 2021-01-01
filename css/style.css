@@ -32,14 +32,55 @@ p {
 form {
   width: 60%;
   background: white;
-  display: inline-block;
-  overflow: hidden;
-  display: -webkit-flex;
-  display: flex;
   border-radius: 0.2em;
   border: solid 4px white;
   box-shadow: 0 1px 14px rgba(0, 0, 0, 0.12);
 }
+#errorTooltip {
+  width: 100%;
+  display: -webkit-flex;
+  display: flex;
+  position: relative;
+}
+#errorTooltip .tooltipText {
+  visibility: hidden;
+  width: 100%;
+  background-color: rgba(214, 54, 54, 1);
+  box-shadow: 0 1px 14px rgba(0, 0, 0, 0.4);
+  text-shadow: 0.05em 0.05em #4c4c4c;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 4;
+  bottom: 100%;
+}
+
+#errorTooltip .tooltipText.showTooltip {
+  visibility: visible;
+  transition-delay: 0.3s;
+}
+.error {
+  border: solid 4px rgba(214, 54, 54, 0.6);
+  animation-name: shake;
+  animation-duration: 0.1s;
+  animation-timing-function: linear;
+  animation-iteration-count: 4;
+  animation-direction: alternate;
+  animation-fill-mode: backwards;
+}
+@keyframes shake {
+  0% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(5px);
+  }
+}
+
 form button {
   padding: 0 1em;
   font-size: 1em;
@@ -63,6 +104,7 @@ ul li {
 button {
   cursor: pointer;
 }
+div,
 input,
 button {
   border: none;
@@ -148,7 +190,6 @@ div > label {
 }
 
 /* hide list item */
-
 .hidden {
   display: none;
 }
@@ -170,10 +211,13 @@ div > label {
   }
   form {
     width: 95%;
-    -webkit-flex-direction: column;
-    flex-direction: column;
+
     margin: auto;
     margin-top: 2.5em;
+  }
+  form div {
+    -webkit-flex-direction: column;
+    flex-direction: column;
   }
   form button {
     padding: 12px 0;
@@ -215,7 +259,7 @@ div > label {
   }
   form {
     margin: 4.15em auto 0;
-    z-index: 3000;
+    z-index: 3;
     position: relative;
   }
   .wrapper {
@@ -224,7 +268,7 @@ div > label {
   .main {
     padding: 3.8em 1.5em 0.75em;
     position: relative;
-    z-index: 10;
+    z-index: 2;
   }
   ul {
     display: -webkit-flex;
