@@ -3,7 +3,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   const input = document.querySelector("#registrar input");
   const ul = document.getElementById("invitedList");
   const tooltip = document.getElementById("errorTooltip").firstElementChild;
-  const filterContainer = ul.previousElementSibling;
+  const isConfirmed = document.getElementById("confirmedFilter");
 
   const data = {
     validateStorage: (type = "localStorage") => {
@@ -88,16 +88,21 @@ window.addEventListener("DOMContentLoaded", (event) => {
   function createCard(name, RSVP) {
     const li = makeElement("li");
     const nameSpan = makeElement("span", { "innerHTML": name });
-    const label = makeElement("label", { "textContent": "Confirmed" });
+    const label = makeElement("label", { "textContent": "Confirm" });
     const checkbox = makeElement("input", {
       "type": "checkbox",
     });
 
     if (RSVP) {
       checkbox.checked = "true";
+      label.textContent = "Confirmed";
       li.className = "responded";
     }
-    console.log(typeof RSVP);
+    const notes = makeElement("p", {
+      "className": "notes",
+      "innerHTML": "Add your notes here",
+    });
+
     const edit = makeElement("button", {
       "innerHTML": "Edit",
     });
@@ -106,52 +111,72 @@ window.addEventListener("DOMContentLoaded", (event) => {
     });
 
     label.appendChild(checkbox);
-    li.append(nameSpan, label, edit, remove);
+    li.append(nameSpan, label, notes, edit, remove);
     return li;
+  }
+
+  function isDuplicate(name) {
+    const spans = document.querySelectorAll("ul li span");
+    const names = [...spans].map((span) => span.innerHTML);
+    return names.includes(name);
   }
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const spans = document.querySelectorAll("ul li span");
-    const names = [...spans].map((span) => span.innerHTML);
-    if (!names.includes(input.value)) {
-      if (form.classList.contains("error")) form.classList.remove("error");
-      if (tooltip.classList.contains("showTooltip"))
-        tooltip.classList.remove("showTooltip");
-      const text = input.value;
-      input.value = "";
-
-      const submitBtn = input.nextElementSibling;
-      submitBtn.className = "disabled";
-
-      const li = createCard(text);
-      ul.appendChild(li);
-      return data.setLocalStorage();
+    if (!isDuplicate(input.value)) {
+      form.classList.add("error");
+      return tooltip.classList.add("showTooltip");
     }
-    form.classList.add("error");
-    tooltip.classList.add("showTooltip");
+
+    if (form.classList.contains("error")) form.classList.remove("error");
+    if (tooltip.classList.contains("showTooltip"))
+      tooltip.classList.remove("showTooltip");
+    const text = input.value;
+    input.value = "";
+
+    const submitBtn = input.nextElementSibling;
+    submitBtn.className = "disabled";
+
+    const li = createCard(text);
+    ul.appendChild(li);
+    return data.setLocalStorage();
   });
+
+  function hideUnconfirmed(affectedElements) {
+    affectedElements
+      .filter((li) => {
+        return !li.classList.contains("responded");
+      })
+      .forEach((li) => {
+        li.classList.toggle("hidden");
+      });
+  }
 
   /**
    * @listens filterContainer
    * @description Listens for a check mark and hides unconfirmed guests from the list
    */
-  filterContainer.addEventListener("change", (e) => {
-    [...ul.children]
-      .filter((li) => !li.classList.contains("responded"))
-      .forEach((li) => {
-        li.classList.toggle("hidden");
-      });
+  isConfirmed.addEventListener("change", (e) => {
+    // const state = isConfirmed.checked
+    hideUnconfirmed([...ul.children]);
   });
 
   /**
    * @listens ul
-   * @description Toggles whether an invitee has responded based on whether their "Confirmed" box is checked
+   * @description Toggles whether an invitee has responded based on whether their "Confirm" box is checked
    */
   ul.addEventListener("change", (e) => {
-    const li = e.target.parentNode.parentNode;
-    li.classList.toggle("responded", e.target.checked);
-    data.setLocalStorage();
+    if (e.target.type == "checkbox") {
+      const checkbox = e.target;
+      const li = checkbox.parentNode.parentNode;
+      li.classList.toggle("responded", checkbox.checked);
+      // label.childNodes.filter((node) => element.nodeType == Node.TEXT_NODE)[0] = "Confirmed"
+      checkbox.previousSibling.nodeValue == "Confirmed"
+        ? (checkbox.previousSibling.nodeValue = "Confirm")
+        : (checkbox.previousSibling.nodeValue = "Confirmed");
+      if (isConfirmed.checked) hideUnconfirmed([li]);
+      data.setLocalStorage();
+    }
   });
 
   /**
@@ -163,28 +188,45 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (button.tagName == "BUTTON") {
       const action = button.innerHTML.toLowerCase();
       const li = button.parentNode;
-      const nameElement = li.firstElementChild;
-      const name = nameElement.value ?? nameElement.innerHTML;
+      const name = li.firstElementChild;
+      const notes = li.querySelector(".notes");
+
       let nameField;
+      let notesField;
 
       const nameActions = {
         remove: () => li.parentNode.removeChild(li),
         edit: () => {
-          li.removeChild(nameElement);
-          nameField = makeElement("input", { "type": "text", "value": name });
           button.innerHTML = "Save";
-          li.prepend(nameField);
+          nameField = makeElement("input", {
+            "type": "text",
+            "value": name.innerHTML,
+          });
+          li.replaceChild(nameField, name);
+          notesField = makeElement("textarea", {
+            "placeholder": "Add your notes here",
+            "rows": "5",
+            "className": "notes",
+            "value": notes.innerHTML,
+          });
+          if (notesField.value === "Add your notes here") notesField.value = "";
+          li.replaceChild(notesField, notes);
         },
         save: () => {
-          li.removeChild(nameElement);
-          nameField = makeElement("span", { "innerHTML": name });
-          nameField.innerHTML = name;
+          console.log(name.value);
+          if (isDuplicate(name.value))
+            return alert("You've already entered a contact with that name!");
+          nameField = makeElement("span", { "innerHTML": name.value });
           button.innerHTML = "Edit";
-          li.prepend(nameField);
+          li.replaceChild(nameField, name);
+          notesField = makeElement("p", {
+            "className": "notes",
+            "innerHTML": notes.value || "Add your notes here",
+          });
+          li.replaceChild(notesField, notes);
         },
       };
-      nameActions[action]();
-      data.setLocalStorage();
+      if (nameActions[action]()) data.setLocalStorage();
     }
   });
 
