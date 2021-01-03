@@ -16,7 +16,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         return true;
       } catch (e) {
         alert(
-          "You are browsing in a manner that has local storage disabled, e.g. in private mode or with Javascript features turned off. This page will not save your invitees across page loads."
+          "You are browsing in a manner that has local storage disabled, e.g. in private mode or with Javascript features turned off. This page will not be able to save your data between screen refreshes."
         );
         return (
           e instanceof DOMException &&
@@ -40,7 +40,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
         const storage = JSON.parse(localStorage.invitees);
         for (const name in storage) {
           if (Object.hasOwnProperty.call(storage, name)) {
-            const invitee = createCard(name, storage[name]);
+            const invitee = createCard(
+              name,
+              storage[name].responded,
+              storage[name].notes
+            );
             ul.appendChild(invitee);
           }
         }
@@ -51,10 +55,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
         const lis = document.querySelectorAll("ul li");
         const storage = {};
         lis.forEach((li) => {
-          storage[li.firstElementChild.innerHTML] = li.classList.contains(
-            "responded"
-          );
+          storage[li.firstElementChild.innerHTML] = {
+            "responded": li.classList.contains("responded"),
+            "notes": li.querySelector("p").innerHTML,
+          };
         });
+        console.log(storage);
         localStorage.invitees = JSON.stringify(storage);
       }
     },
@@ -65,15 +71,15 @@ window.addEventListener("DOMContentLoaded", (event) => {
   /**
    * @function makeElement
    * @description Creates an element along with attributes
-   * @param {String} elementType The element type you want to create
+   * @param {String} elementTag The element type you want to create
    * @param {Object=} attributes Attributes and their values are passed in as property/value pairs
    * @returns {Element} The created element
    */
-  function makeElement(elementType, attributes) {
-    const element = document.createElement(elementType);
+  function makeElement(elementTag, attributes) {
+    const element = document.createElement(elementTag);
     if (attributes)
       for (let attribute in attributes) {
-        element[attribute] = attributes[attribute];
+        element[attribute] = attributes[attribute] || "";
       }
     return element;
   }
@@ -85,7 +91,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
    * @param {Boolean=} RSVP
    * @returns {Element} List item
    */
-  function createCard(name, RSVP) {
+  function createCard(name, RSVP, notes) {
     const li = makeElement("li");
     const nameSpan = makeElement("span", { "innerHTML": name });
     const label = makeElement("label", { "textContent": "Confirm" });
@@ -98,9 +104,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
       label.textContent = "Confirmed";
       li.className = "responded";
     }
-    const notes = makeElement("p", {
+    const notesP = makeElement("p", {
       "className": "notes",
-      "innerHTML": "Add your notes here",
+      "innerHTML": notes || "Add your notes here",
     });
 
     const edit = makeElement("button", {
@@ -111,7 +117,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     });
 
     label.appendChild(checkbox);
-    li.append(nameSpan, label, notes, edit, remove);
+    li.append(nameSpan, label, notesP, edit, remove);
     return li;
   }
 
@@ -123,7 +129,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!isDuplicate(input.value)) {
+    if (isDuplicate(input.value)) {
       form.classList.add("error");
       return tooltip.classList.add("showTooltip");
     }
@@ -210,7 +216,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
             "value": notes.innerHTML,
           });
           if (notesField.value === "Add your notes here") notesField.value = "";
-          li.replaceChild(notesField, notes);
+          return li.replaceChild(notesField, notes);
         },
         save: () => {
           console.log(name.value);
@@ -223,7 +229,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
             "className": "notes",
             "innerHTML": notes.value || "Add your notes here",
           });
-          li.replaceChild(notesField, notes);
+          return li.replaceChild(notesField, notes);
         },
       };
       if (nameActions[action]()) data.setLocalStorage();
@@ -240,5 +246,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
     } else {
       e.target.nextElementSibling.className = "disabled";
     }
+  });
+  window.addEventListener("beforeunload", (event) => {
+    if (document.querySelectorAll('input[type="text"]').length > 1)
+      alert(
+        "You are about to navigate away from the page without saving your edit. All unsaved changes will be lost."
+      );
   });
 });
