@@ -247,10 +247,10 @@ window.addEventListener("DOMContentLoaded", (event) => {
       e.target.nextElementSibling.className = "disabled";
     }
   });
-  window.addEventListener("beforeunload", (event) => {
-    if (document.querySelectorAll('input[type="text"]').length > 1)
-      alert(
-        "You are about to navigate away from the page without saving your edit. All unsaved changes will be lost."
-      );
-  });
 });
+
+window.onbeforeunload = function (event) {
+  if (document.querySelectorAll('input[type="text"]').length > 1)
+    return (event.returnValue =
+      "You're about to leave the page. Do you want to continue?");
+};
