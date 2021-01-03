@@ -1,6 +1,7 @@
 window.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("registrar");
   const input = document.querySelector("#registrar input");
+  const submitBtn = input.nextElementSibling;
   const ul = document.getElementById("invitedList");
   const tooltip = document.getElementById("errorTooltip").firstElementChild;
   const confirmedFilter = document.getElementById("confirmedFilter");
@@ -68,27 +69,27 @@ window.addEventListener("DOMContentLoaded", () => {
     return names.includes(name.toLowerCase());
   }
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (input.value === "") return form.classList.add("error");
+  function isValidInput(action) {
+    if (input.value === "") {
+      form.classList.add("error");
+      return false;
+    }
     if (isDuplicate(input.value)) {
       form.classList.add("error");
-      return tooltip.classList.add("showTooltip");
+      tooltip.classList.add("showTooltip");
+      return false;
     }
-
     if (form.classList.contains("error")) {
       form.classList.remove("error");
       tooltip.classList.remove("showTooltip");
     }
+    return true;
+  }
 
-    const submitBtn = input.nextElementSibling;
-    submitBtn.className = "disabled";
-
-    const li = createCard(input.value);
-    ul.appendChild(li);
+  function resetInput() {
     input.value = "";
-    return data.setStorage();
-  });
+    submitBtn.className = "disabled";
+  }
 
   /**
    * @listens input
@@ -96,14 +97,23 @@ window.addEventListener("DOMContentLoaded", () => {
    */
   input.addEventListener("keyup", function (e) {
     const input = e.target;
+
     if (input.value != "") {
-      // if (form.classList.contains("error")) {
-      //   form.classList.remove("error");
-      //   tooltip.classList.remove("showTooltip");
-      // }
-      return (input.nextElementSibling.className = "");
+      isValidInput();
+      return (submitBtn.className = "");
     }
-    return (input.nextElementSibling.className = "disabled");
+    return resetInput();
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!isValidInput()) return false;
+
+    const li = createCard(input.value);
+    ul.appendChild(li);
+
+    resetInput();
+    return data.setStorage();
   });
 
   /**
