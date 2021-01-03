@@ -1,72 +1,9 @@
-window.addEventListener("DOMContentLoaded", (event) => {
+window.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("registrar");
   const input = document.querySelector("#registrar input");
   const ul = document.getElementById("invitedList");
   const tooltip = document.getElementById("errorTooltip").firstElementChild;
-  const isConfirmed = document.getElementById("confirmedFilter");
-
-  const data = {
-    validateStorage: (type = "localStorage") => {
-      var storage;
-      try {
-        storage = window[type];
-        var x = "__storage_test__";
-        storage.setItem(x, x);
-        storage.removeItem(x);
-        return true;
-      } catch (e) {
-        alert(
-          "You are browsing in a manner that has local storage disabled, e.g. in private mode or with Javascript features turned off. This page will not be able to save your data between screen refreshes."
-        );
-        return (
-          e instanceof DOMException &&
-          // everything except Firefox
-          (e.code === 22 ||
-            // Firefox
-            e.code === 1014 ||
-            // test name field too, because code might not be present
-            // everything except Firefox
-            e.name === "QuotaExceededError" ||
-            // Firefox
-            e.name === "NS_ERROR_DOM_QUOTA_REACHED") &&
-          // acknowledge QuotaExceededError only if there's something already stored
-          storage &&
-          storage.length !== 0
-        );
-      }
-    },
-    getLocallyStoredInvitees: (storageType) => {
-      if (data.validateStorage(storageType) && localStorage.invitees) {
-        const storage = JSON.parse(localStorage.invitees);
-        for (const name in storage) {
-          if (Object.hasOwnProperty.call(storage, name)) {
-            const invitee = createCard(
-              name,
-              storage[name].responded,
-              storage[name].notes
-            );
-            ul.appendChild(invitee);
-          }
-        }
-      }
-    },
-    setLocalStorage: (storageType) => {
-      if (data.validateStorage(storageType)) {
-        const lis = document.querySelectorAll("ul li");
-        const storage = {};
-        lis.forEach((li) => {
-          storage[li.firstElementChild.innerHTML] = {
-            "responded": li.classList.contains("responded"),
-            "notes": li.querySelector("p").innerHTML,
-          };
-        });
-        console.log(storage);
-        localStorage.invitees = JSON.stringify(storage);
-      }
-    },
-  };
-
-  data.getLocallyStoredInvitees();
+  const confirmedFilter = document.getElementById("confirmedFilter");
 
   /**
    * @function makeElement
@@ -87,23 +24,21 @@ window.addEventListener("DOMContentLoaded", (event) => {
   /**
    * @function createCard
    * @description Creates a card as a list item and inserts it into the DOM
-   * @param {String} name
-   * @param {Boolean=} RSVP
+   * @param {String} name Invitee name
+   * @param {String} notes Invitee notes
+   * @param {Boolean=} RSVP Whether invitee confirmed
    * @returns {Element} List item
    */
-  function createCard(name, RSVP, notes) {
-    const li = makeElement("li");
+  function createCard(name, notes, RSVP) {
+    const li = makeElement("li", RSVP ? { "className": "responded" } : null);
     const nameSpan = makeElement("span", { "innerHTML": name });
-    const label = makeElement("label", { "textContent": "Confirm" });
+    const label = makeElement("label", {
+      "textContent": RSVP ? "Confirmed" : "Confirm",
+    });
     const checkbox = makeElement("input", {
       "type": "checkbox",
+      "checked": RSVP,
     });
-
-    if (RSVP) {
-      checkbox.checked = "true";
-      label.textContent = "Confirmed";
-      li.className = "responded";
-    }
     const notesP = makeElement("p", {
       "className": "notes",
       "innerHTML": notes || "Add your notes here",
@@ -121,54 +56,81 @@ window.addEventListener("DOMContentLoaded", (event) => {
     return li;
   }
 
+  /**
+   * @function isDuplicate
+   * @param {String} name
+   * @description Checks to see if the name that is about to be saved is a duplicate of any other invitees
+   * @returns {Boolean}
+   */
   function isDuplicate(name) {
     const spans = document.querySelectorAll("ul li span");
-    const names = [...spans].map((span) => span.innerHTML);
-    return names.includes(name);
+    const names = [...spans].map((span) => span.innerHTML.toLowerCase());
+    return names.includes(name.toLowerCase());
   }
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    if (input.value === "") return form.classList.add("error");
     if (isDuplicate(input.value)) {
       form.classList.add("error");
       return tooltip.classList.add("showTooltip");
     }
 
-    if (form.classList.contains("error")) form.classList.remove("error");
-    if (tooltip.classList.contains("showTooltip"))
+    if (form.classList.contains("error")) {
+      form.classList.remove("error");
       tooltip.classList.remove("showTooltip");
-    const text = input.value;
-    input.value = "";
+    }
 
     const submitBtn = input.nextElementSibling;
     submitBtn.className = "disabled";
 
-    const li = createCard(text);
+    const li = createCard(input.value);
     ul.appendChild(li);
-    return data.setLocalStorage();
+    input.value = "";
+    return data.setStorage();
   });
 
+  /**
+   * @listens input
+   * @description Checks for value of input on keyup to control accessibility
+   */
+  input.addEventListener("keyup", function (e) {
+    const input = e.target;
+    if (input.value != "") {
+      // if (form.classList.contains("error")) {
+      //   form.classList.remove("error");
+      //   tooltip.classList.remove("showTooltip");
+      // }
+      return (input.nextElementSibling.className = "");
+    }
+    return (input.nextElementSibling.className = "disabled");
+  });
+
+  /**
+   * @function hideUnconfirmed
+   * @param {Array} affectedElements An array of elements
+   * @description Hides each of the elements given as a parameter
+   */
   function hideUnconfirmed(affectedElements) {
-    affectedElements
-      .filter((li) => {
-        return !li.classList.contains("responded");
+    return affectedElements
+      .filter((element) => {
+        return !element.classList.contains("responded");
       })
-      .forEach((li) => {
-        li.classList.toggle("hidden");
+      .forEach((element) => {
+        element.classList.toggle("hidden");
       });
   }
 
   /**
-   * @listens filterContainer
+   * @listens confirmedFilter
    * @description Listens for a check mark and hides unconfirmed guests from the list
    */
-  isConfirmed.addEventListener("change", (e) => {
-    // const state = isConfirmed.checked
+  confirmedFilter.addEventListener("change", (e) => {
     hideUnconfirmed([...ul.children]);
   });
 
   /**
-   * @listens ul
+   * @listens ul List item confirmation checkboxes will fire this event
    * @description Toggles whether an invitee has responded based on whether their "Confirm" box is checked
    */
   ul.addEventListener("change", (e) => {
@@ -176,12 +138,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
       const checkbox = e.target;
       const li = checkbox.parentNode.parentNode;
       li.classList.toggle("responded", checkbox.checked);
-      // label.childNodes.filter((node) => element.nodeType == Node.TEXT_NODE)[0] = "Confirmed"
       checkbox.previousSibling.nodeValue == "Confirmed"
         ? (checkbox.previousSibling.nodeValue = "Confirm")
         : (checkbox.previousSibling.nodeValue = "Confirmed");
-      if (isConfirmed.checked) hideUnconfirmed([li]);
-      data.setLocalStorage();
+      if (confirmedFilter.checked) hideUnconfirmed([li]);
+      data.setStorage();
     }
   });
 
@@ -197,60 +158,137 @@ window.addEventListener("DOMContentLoaded", (event) => {
       const name = li.firstElementChild;
       const notes = li.querySelector(".notes");
 
-      let nameField;
-      let notesField;
+      let nameElement;
+      let notesElement;
 
       const nameActions = {
         remove: () => li.parentNode.removeChild(li),
         edit: () => {
           button.innerHTML = "Save";
-          nameField = makeElement("input", {
+          nameElement = makeElement("input", {
             "type": "text",
             "value": name.innerHTML,
           });
-          li.replaceChild(nameField, name);
-          notesField = makeElement("textarea", {
+          li.replaceChild(nameElement, name);
+          notesElement = makeElement("textarea", {
             "placeholder": "Add your notes here",
             "rows": "5",
             "className": "notes",
             "value": notes.innerHTML,
           });
-          if (notesField.value === "Add your notes here") notesField.value = "";
-          return li.replaceChild(notesField, notes);
+          if (notesElement.value === "Add your notes here")
+            notesElement.value = "";
+          return li.replaceChild(notesElement, notes);
         },
         save: () => {
           console.log(name.value);
           if (isDuplicate(name.value))
             return alert("You've already entered a contact with that name!");
-          nameField = makeElement("span", { "innerHTML": name.value });
+          nameElement = makeElement("span", { "innerHTML": name.value });
           button.innerHTML = "Edit";
-          li.replaceChild(nameField, name);
-          notesField = makeElement("p", {
+          li.replaceChild(nameElement, name);
+          notesElement = makeElement("p", {
             "className": "notes",
             "innerHTML": notes.value || "Add your notes here",
           });
-          return li.replaceChild(notesField, notes);
+          return li.replaceChild(notesElement, notes);
         },
       };
-      if (nameActions[action]()) data.setLocalStorage();
+      if (nameActions[action]() && action != "edit") data.setStorage();
     }
   });
 
   /**
-   * @listens input
-   * @description Disables submit button on empty input
+   * @name data
+   * @constant {Object}
+   * @description Contains methods relating to the storage of data
    */
-  input.addEventListener("keyup", function (e) {
-    if (e.target.value != "") {
-      e.target.nextElementSibling.className = "";
-    } else {
-      e.target.nextElementSibling.className = "disabled";
-    }
-  });
+  const data = {
+    /**
+     * @method validateStorage
+     * @param {String="localStorage"} storageType localStorage or sessionStorage
+     * @description Validates whether storage is available, be it session or local
+     * @inner
+     */
+    validateStorage: (storageType = "localStorage") => {
+      let storage;
+      try {
+        storage = window[storageType];
+        const x = "__storage_test__";
+        storage.setItem(x, x);
+        storage.removeItem(x);
+        return true;
+      } catch (e) {
+        alert(
+          "You are browsing in a manner that has session or local storage disabled, e.g. in private mode or with Javascript features turned off. This page will not be able to save your data between sessions."
+        );
+        return (
+          e instanceof DOMException &&
+          // everything except Firefox
+          (e.code === 22 ||
+            // Firefox
+            e.code === 1014 ||
+            // test name field too, because code might not be present
+            // everything except Firefox
+            e.name === "QuotaExceededError" ||
+            // Firefox
+            e.name === "NS_ERROR_DOM_QUOTA_REACHED") &&
+          // acknowledge QuotaExceededError only if there's something already stored
+          storage &&
+          storage.length !== 0
+        );
+      }
+    },
+
+    /**
+     * @method printStoredInvitees
+     * @param {String="localStorage"} storageType localStorage or sessionStorage
+     * @description Prints the stored invitees to the DOM
+     * @inner
+     */
+    printStoredInvitees: (storageType = "localStorage") => {
+      if (data.validateStorage(storageType) && window[storageType].invitees) {
+        const storage = JSON.parse(window[storageType].invitees);
+        for (const name in storage) {
+          if (Object.hasOwnProperty.call(storage, name)) {
+            const invitee = createCard(
+              name,
+              storage[name].notes,
+              storage[name].responded
+            );
+            ul.appendChild(invitee);
+          }
+        }
+      }
+    },
+
+    /**
+     * @method setStorage
+     * @param {String="localStorage"} storageType localStorage or sessionStorage
+     * @description Sets invitee data to the client side storage
+     * @inner
+     */
+    setStorage: (storageType = "localStorage") => {
+      if (data.validateStorage(storageType)) {
+        const lis = document.querySelectorAll("ul li");
+        console.log(lis);
+        const storage = {};
+        lis.forEach((li) => {
+          storage[li.firstElementChild.innerHTML] = {
+            "responded": li.classList.contains("responded"),
+            "notes": li.querySelector("p").innerHTML,
+          };
+        });
+        return (window[storageType].invitees = JSON.stringify(storage));
+      }
+    },
+  };
+
+  data.printStoredInvitees();
 });
 
 window.onbeforeunload = function (event) {
   if (document.querySelectorAll('input[type="text"]').length > 1)
     return (event.returnValue =
-      "You're about to leave the page. Do you want to continue?");
+      "You're about to leave the page without saving. Do you want to continue?");
 };
