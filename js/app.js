@@ -65,8 +65,10 @@ window.addEventListener("DOMContentLoaded", () => {
    */
   function isDuplicate(name) {
     const spans = document.querySelectorAll("ul li span");
-    const names = [...spans].map((span) => span.innerHTML.toLowerCase());
-    return names.includes(name.toLowerCase());
+    const names = [...spans].map((span) =>
+      span.innerHTML.toLowerCase().split(" ").join("")
+    );
+    return names.includes(name.toLowerCase().split(" ").join(""));
   }
 
   function isValidInput(action) {
