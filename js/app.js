@@ -202,6 +202,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const nameActions = {
         remove: () => li.parentNode.removeChild(li),
+        /**
+         * @method edit
+         * @description Changes the span containing the name to an input with the previous value
+         */
         edit: () => {
           button.innerHTML = "Save";
           nameElement = makeElement("input", {
@@ -219,6 +223,10 @@ window.addEventListener("DOMContentLoaded", () => {
             notesElement.value = "";
           return li.replaceChild(notesElement, notes);
         },
+        /**
+         * @method save
+         * @description Changes the span containing the name to an input with the previous value
+         */
         save: () => {
           if (isDuplicate(name.value))
             return alert("You've already entered a contact with that name!");
@@ -232,6 +240,7 @@ window.addEventListener("DOMContentLoaded", () => {
           return li.replaceChild(notesElement, notes);
         },
       };
+      //purposely does not set storage on edit to prevent undesired data storage
       if (nameActions[action]() && action != "edit") data.setStorage();
     }
   });
