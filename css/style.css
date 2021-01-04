@@ -235,6 +235,9 @@ div > label {
     font-size: 3.6em;
     margin: 0.3em 0 0;
   }
+  h1 + p {
+    margin-bottom: 4rem;
+  }
   ul li {
     margin-bottom: 1em;
   }
