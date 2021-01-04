@@ -58,6 +58,14 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * @function normalizeText
+   * @param {String} text
+   * @description Takes all spaces and special characters out of the string
+   */
+  function normalizeText(text) {
+    return text.replace(/[^a-zA-Z]/gi, "").toLowerCase();
+  }
+  /**
    * @function isDuplicate
    * @param {String} name
    * @description Checks to see if the name that is about to be saved is a duplicate of any other invitees
@@ -65,32 +73,33 @@ window.addEventListener("DOMContentLoaded", () => {
    */
   function isDuplicate(name) {
     const spans = document.querySelectorAll("ul li span");
-    const names = [...spans].map((span) =>
-      span.innerHTML.toLowerCase().split(" ").join("")
-    );
-    return names.includes(name.toLowerCase().split(" ").join(""));
+    const names = [...spans].map((span) => normalizeText(span.innerHTML));
+    return names.includes(normalizeText(name));
   }
 
   function isValidInput(action) {
-    if (input.value === "") {
+    if (normalizeText(input.value) === "") {
       form.classList.add("error");
       return false;
     }
-    if (isDuplicate(input.value)) {
+
+    if (action === "submit" && isDuplicate(input.value)) {
       form.classList.add("error");
       tooltip.classList.add("showTooltip");
       return false;
     }
-    if (form.classList.contains("error")) {
-      form.classList.remove("error");
-      tooltip.classList.remove("showTooltip");
-    }
+
     return true;
   }
 
   function resetInput() {
+    if (form.classList.contains("error")) {
+      form.classList.remove("error");
+      tooltip.classList.remove("showTooltip");
+    }
+
     input.value = "";
-    submitBtn.className = "disabled";
+    return (submitBtn.className = "disabled");
   }
 
   /**
@@ -98,18 +107,15 @@ window.addEventListener("DOMContentLoaded", () => {
    * @description Checks for value of input on keyup to control accessibility
    */
   input.addEventListener("keyup", function (e) {
-    const input = e.target;
-
-    if (input.value != "") {
-      isValidInput();
-      return (submitBtn.className = "");
+    if (!isValidInput(e.type)) {
+      return resetInput();
     }
-    return resetInput();
+    return (submitBtn.className = "");
   });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!isValidInput()) return false;
+    if (!isValidInput(e.type)) return false;
 
     const li = createCard(input.value);
     ul.appendChild(li);
