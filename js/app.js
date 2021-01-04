@@ -24,11 +24,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
   /**
    * @function createCard
-   * @description Creates a card as a list item and inserts it into the DOM
    * @param {String} name Invitee name
    * @param {String} notes Invitee notes
    * @param {Boolean=} RSVP Whether invitee confirmed
    * @returns {Element} List item
+   * @description Creates a card as a list item and inserts it into the DOM
    */
   function createCard(name, notes, RSVP) {
     const li = makeElement("li", RSVP ? { "className": "responded" } : null);
@@ -60,16 +60,18 @@ window.addEventListener("DOMContentLoaded", () => {
   /**
    * @function normalizeText
    * @param {String} text
-   * @description Takes all spaces and special characters out of the string
+   * @returns {String} Text will all spaces and special characters removed
+
    */
   function normalizeText(text) {
     return text.replace(/[^a-zA-Z]/gi, "").toLowerCase();
   }
+
   /**
    * @function isDuplicate
    * @param {String} name
-   * @description Checks to see if the name that is about to be saved is a duplicate of any other invitees
    * @returns {Boolean}
+   * @description Checks to see if the name that is about to be saved is a duplicate of any other invitees
    */
   function isDuplicate(name) {
     const spans = document.querySelectorAll("ul li span");
@@ -77,29 +79,43 @@ window.addEventListener("DOMContentLoaded", () => {
     return names.includes(normalizeText(name));
   }
 
-  function isValidInput(action) {
-    if (normalizeText(input.value) === "") {
-      form.classList.add("error");
-      return false;
-    }
-
-    if (action === "submit" && isDuplicate(input.value)) {
-      form.classList.add("error");
-      tooltip.classList.add("showTooltip");
-      return false;
-    }
-
-    return true;
+  /**
+   * @function isValidInput
+   * @param {String} action
+   * @returns {Boolean}
+   * @description Checks incoming string for validity and responds with a true or false
+   */
+  function isValidInput(name) {
+    return !(isDuplicate(name) || normalizeText(name) === "");
   }
 
-  function resetInput() {
-    if (form.classList.contains("error")) {
+  /**
+   *
+   * @param {Event} event
+   * @param {String} name
+   * @description Turns the invalid state of the input button on and off based on the triggering event
+   */
+  function toggleInvalidState(event, name) {
+    if (event.type === "submit" || normalizeText(name) !== "") {
+      form.classList.add("error");
+
+      if (isDuplicate(name)) tooltip.classList.add("showTooltip");
+    }
+
+    if (event.type === "keyup" && event.key !== "Enter") {
       form.classList.remove("error");
       tooltip.classList.remove("showTooltip");
     }
+  }
 
+  /**
+   * @function disableInput
+   * @description Clears the input and make the submit button non-functional
+   * */
+  function disableInput() {
     input.value = "";
-    return (submitBtn.className = "disabled");
+    submitBtn.className = "disabled";
+    return;
   }
 
   /**
@@ -107,20 +123,25 @@ window.addEventListener("DOMContentLoaded", () => {
    * @description Checks for value of input on keyup to control accessibility
    */
   input.addEventListener("keyup", function (e) {
-    if (!isValidInput(e.type)) {
-      return resetInput();
+    toggleInvalidState(e, input.value);
+    if (normalizeText(input.value) != "") {
+      return (submitBtn.className = "");
     }
-    return (submitBtn.className = "");
+    return disableInput();
   });
 
+  /**
+   * @listens form
+   * @description Handles a submit by either alerting a user of a problem or creating new invitee
+   */
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (!isValidInput(e.type)) return false;
+    if (!isValidInput(input.value)) return toggleInvalidState(e, input.value);
 
     const li = createCard(input.value);
     ul.appendChild(li);
 
-    resetInput();
+    disableInput();
     return data.setStorage();
   });
 
@@ -199,7 +220,6 @@ window.addEventListener("DOMContentLoaded", () => {
           return li.replaceChild(notesElement, notes);
         },
         save: () => {
-          console.log(name.value);
           if (isDuplicate(name.value))
             return alert("You've already entered a contact with that name!");
           nameElement = makeElement("span", { "innerHTML": name.value });
@@ -289,7 +309,6 @@ window.addEventListener("DOMContentLoaded", () => {
     setStorage: (storageType = "localStorage") => {
       if (data.validateStorage(storageType)) {
         const lis = document.querySelectorAll("ul li");
-        console.log(lis);
         const storage = {};
         lis.forEach((li) => {
           storage[li.firstElementChild.innerHTML] = {
