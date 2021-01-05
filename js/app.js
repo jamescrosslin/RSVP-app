@@ -211,6 +211,7 @@ window.addEventListener("DOMContentLoaded", () => {
           nameElement = makeElement("input", {
             "type": "text",
             "value": name.innerHTML,
+            "maxlength": 25,
           });
           li.replaceChild(nameElement, name);
           notesElement = makeElement("textarea", {
@@ -218,6 +219,7 @@ window.addEventListener("DOMContentLoaded", () => {
             "rows": "5",
             "className": "notes",
             "value": notes.innerHTML,
+            "maxlength": 500,
           });
           if (
             notesElement.value ===

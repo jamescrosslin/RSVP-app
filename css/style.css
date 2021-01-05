@@ -121,6 +121,10 @@ header input {
   font-size: 1.15em;
   width: 100%;
 }
+li span {
+  height: 25px;
+  overflow: hidden;
+}
 li span,
 li input[type="text"],
 li label {
