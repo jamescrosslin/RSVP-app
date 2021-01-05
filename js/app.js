@@ -42,7 +42,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     const notesP = makeElement("p", {
       "className": "notes",
-      "innerHTML": notes || "Add your notes here",
+      "innerHTML": notes || "Add notes or change name with the edit button",
     });
 
     const edit = makeElement("button", {
@@ -214,12 +214,15 @@ window.addEventListener("DOMContentLoaded", () => {
           });
           li.replaceChild(nameElement, name);
           notesElement = makeElement("textarea", {
-            "placeholder": "Add your notes here",
+            "placeholder": "Add notes or change name with the edit button",
             "rows": "5",
             "className": "notes",
             "value": notes.innerHTML,
           });
-          if (notesElement.value === "Add your notes here")
+          if (
+            notesElement.value ===
+            "Add notes or change name with the edit button"
+          )
             notesElement.value = "";
           return li.replaceChild(notesElement, notes);
         },
