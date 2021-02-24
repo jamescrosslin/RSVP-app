@@ -1,10 +1,10 @@
 window.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("registrar");
-  const input = document.querySelector("#registrar input");
-  const submitBtn = input.nextElementSibling;
-  const ul = document.getElementById("invitedList");
-  const tooltip = document.getElementById("errorTooltip").firstElementChild;
-  const confirmedFilter = document.getElementById("confirmedFilter");
+  const form = document.getElementById("registrar"),
+    input = document.querySelector("#registrar input"),
+    submitBtn = input.nextElementSibling,
+    ul = document.getElementById("invitedList"),
+    tooltip = document.getElementById("errorTooltip").firstElementChild,
+    confirmedFilter = document.getElementById("confirmedFilter");
 
   /**
    * @function makeElement
